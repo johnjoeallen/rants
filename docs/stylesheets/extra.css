@@ -1,17 +1,29 @@
-/* Slate (dark) scheme: shift the base hue toward violet instead of the
-   default blue-gray, so the whole dark theme reads as purple. */
+/* Dark (slate) scheme: deep, saturated purple instead of Material's
+   default low-saturation blue-grey. */
 [data-md-color-scheme="slate"] {
-  --md-hue: 275;
+  --md-default-bg-color: hsl(268, 35%, 10%);
+  --md-default-bg-color--light: hsl(268, 30%, 14%);
+  --md-default-bg-color--lighter: hsl(268, 25%, 18%);
+  --md-default-fg-color: hsl(268, 20%, 92%);
+  --md-default-fg-color--light: hsl(268, 15%, 75%);
+  --md-default-fg-color--lighter: hsl(268, 12%, 58%);
+  --md-code-bg-color: hsl(268, 28%, 15%);
+  --md-code-bg-color--light: hsl(268, 28%, 17%);
+  --md-code-bg-color--lighter: hsl(268, 25%, 20%);
+  --md-footer-bg-color: hsl(268, 35%, 7%);
+  --md-footer-bg-color--dark: hsl(268, 35%, 6%);
 }
 
-/* Default (light) scheme: dim the near-white background/foreground so it's
-   less harsh, with a faint violet tint to match the dark theme's mood. */
+/* Light (default) scheme: noticeably darker/dimmer than Material's
+   near-white default, with a clear violet cast instead of neutral grey. */
 [data-md-color-scheme="default"] {
-  --md-default-bg-color: hsl(275, 12%, 93%);
-  --md-default-bg-color--light: hsl(275, 12%, 95%);
-  --md-default-bg-color--lighter: hsl(275, 12%, 97%);
-  --md-default-fg-color: hsl(275, 15%, 16%);
-  --md-default-fg-color--light: hsl(275, 10%, 30%);
-  --md-default-fg-color--lighter: hsl(275, 8%, 45%);
-  --md-code-bg-color: hsl(275, 12%, 90%);
+  --md-default-bg-color: hsl(268, 22%, 80%);
+  --md-default-bg-color--light: hsl(268, 22%, 83%);
+  --md-default-bg-color--lighter: hsl(268, 22%, 86%);
+  --md-default-fg-color: hsl(268, 25%, 12%);
+  --md-default-fg-color--light: hsl(268, 18%, 26%);
+  --md-default-fg-color--lighter: hsl(268, 14%, 40%);
+  --md-code-bg-color: hsl(268, 20%, 75%);
+  --md-code-bg-color--light: hsl(268, 20%, 77%);
+  --md-code-bg-color--lighter: hsl(268, 20%, 79%);
 }

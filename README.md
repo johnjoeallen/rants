@@ -1,24 +1,20 @@
 # rants
 
 Various rants on software, architecture, and engineering, published as a
-GitHub Pages site (Jekyll + minima).
+GitHub Pages site (MkDocs + Material).
 
 Site: https://johnjoeallen.github.io/rants/
 
-Posts live in `_posts/`. To add a new rant, drop a Markdown file there named
-`YYYY-MM-DD-title.md` with front matter like:
+Posts live in `docs/posts/`. To add a new rant, drop a Markdown file there
+and link it from `docs/index.md` and from the `nav:` section of
+`mkdocs.yml`.
 
-```yaml
----
-layout: post
-title: "Your Title"
-date: YYYY-MM-DD
-categories: [architecture]
----
-```
+A GitHub Actions workflow (`.github/workflows/deploy.yml`) builds and
+publishes the site to the `gh-pages` branch on every push to `main`.
 
 ## Local preview
 
 ```sh
-bundle exec jekyll serve
+pip install -r requirements.txt
+mkdocs serve
 ```

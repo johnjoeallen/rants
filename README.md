@@ -15,6 +15,7 @@ publishes the site to the `gh-pages` branch on every push to `main`.
 ## Local preview
 
 ```sh
-pip install -r requirements.txt
-mkdocs serve
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/mkdocs serve
 ```

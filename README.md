@@ -3,6 +3,8 @@
 Various rants on software, architecture, and engineering, published as a
 GitHub Pages site (Jekyll + minima).
 
+Site: https://johnjoeallen.github.io/rants/
+
 Posts live in `_posts/`. To add a new rant, drop a Markdown file there named
 `YYYY-MM-DD-title.md` with front matter like:
 

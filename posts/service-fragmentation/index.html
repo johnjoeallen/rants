@@ -1,0 +1,2286 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Various rants on software, architecture, and engineering.">
+      
+      
+      
+        <link rel="canonical" href="https://johnjoeallen.github.io/rants/posts/service-fragmentation/">
+      
+      
+        <link rel="prev" href="../..">
+      
+      
+        <link rel="next" href="../microservices-success-story/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Service Fragmentation, Failure Boundaries and Pointless Dependencies - Rants</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#service-fragmentation-failure-boundaries-and-pointless-dependencies" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Rants" class="md-header__button md-logo" aria-label="Rants" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Rants
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Service Fragmentation, Failure Boundaries and Pointless Dependencies
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="yellow" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/johnjoeallen/rants" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    johnjoeallen/rants
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Rants" class="md-nav__button md-logo" aria-label="Rants" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Rants
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/johnjoeallen/rants" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    johnjoeallen/rants
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rants
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Rants
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Fragmentation, Failure Boundaries and Pointless Dependencies
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Fragmentation, Failure Boundaries and Pointless Dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-a-service-is-not-independent-because-it-has-its-own-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. A Service Is Not Independent Because It Has Its Own Deployment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-service-count-tells-us-almost-nothing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Service Count Tells Us Almost Nothing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-deployment-boundaries-and-failure-boundaries-are-different-things" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Deployment Boundaries and Failure Boundaries Are Different Things
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-the-common-data-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The Common Data Service
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-doing-something-does-not-make-something-a-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Doing Something Does Not Make Something a Service
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-service-fragmentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Service Fragmentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-what-real-service-decomposition-looks-like" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. What Real Service Decomposition Looks Like
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-owning-your-universe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Owning Your Universe
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-shared-source-does-not-mean-shared-runtime-dependency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Shared Source Does Not Mean Shared Runtime Dependency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-data-duplication-is-not-automatically-bad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Data Duplication Is Not Automatically Bad
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-the-difference-is-failure-behaviour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. The Difference Is Failure Behaviour
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-failure-isolation-requires-state-independence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Failure Isolation Requires State Independence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-independent-deployment-is-not-independent-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Independent Deployment Is Not Independent Evolution
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-paging-exposes-this-immediately" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Paging Exposes This Immediately
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-semantic-coupling-is-more-important-than-api-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Semantic Coupling Is More Important Than API Compatibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#16-the-contract-super-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16. The Contract Super-Service
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#17-contract-ownership-creates-another-dependency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17. Contract Ownership Creates Another Dependency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#18-unified-entry-point-does-not-mean-unified-contract-owner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        18. Unified Entry Point Does Not Mean Unified Contract Owner
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#19-aggregation-justifies-abstraction-routing-does-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        19. Aggregation Justifies Abstraction. Routing Does Not.
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#20-the-contract-super-service-undermines-team-independence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        20. The Contract Super-Service Undermines Team Independence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#21-pointless-service-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        21. Pointless Service Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#22-every-synchronous-edge-has-a-price" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        22. Every Synchronous Edge Has a Price
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#23-deep-dependencies-amplify-failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        23. Deep Dependencies Amplify Failure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#24-availability-follows-the-mandatory-dependency-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        24. Availability Follows the Mandatory Dependency Graph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#25-compare-the-two-architectural-styles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        25. Compare the Two Architectural Styles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="25. Compare the Two Architectural Styles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fragmented-service-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fragmented service architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capability-owned-service-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability-owned service architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#26-the-netflix-style-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        26. The Netflix-Style Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#27-holding-the-entire-universe-of-the-capability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        27. Holding the Entire Universe of the Capability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#28-freshness-and-availability-are-a-trade-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28. Freshness and Availability Are a Trade-Off
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#29-duplication-can-buy-decoupling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        29. Duplication Can Buy Decoupling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#30-the-real-test-for-a-service-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        30. The Real Test for a Service Boundary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#31-measure-the-graph-rather-than-counting-the-boxes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        31. Measure the Graph Rather Than Counting the Boxes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#32-the-diagram-can-lie" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        32. The Diagram Can Lie
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#33-a-distributed-monolith-is-not-the-only-failure-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        33. A Distributed Monolith Is Not the Only Failure Mode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#34-what-a-good-service-boundary-buys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        34. What a Good Service Boundary Buys
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#35-the-core-fallacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        35. The Core Fallacy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conclusion
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../microservices-success-story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Microservices: A Success Story
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-a-service-is-not-independent-because-it-has-its-own-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. A Service Is Not Independent Because It Has Its Own Deployment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-service-count-tells-us-almost-nothing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Service Count Tells Us Almost Nothing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-deployment-boundaries-and-failure-boundaries-are-different-things" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Deployment Boundaries and Failure Boundaries Are Different Things
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-the-common-data-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The Common Data Service
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-doing-something-does-not-make-something-a-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Doing Something Does Not Make Something a Service
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-service-fragmentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Service Fragmentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-what-real-service-decomposition-looks-like" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. What Real Service Decomposition Looks Like
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-owning-your-universe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Owning Your Universe
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-shared-source-does-not-mean-shared-runtime-dependency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Shared Source Does Not Mean Shared Runtime Dependency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-data-duplication-is-not-automatically-bad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Data Duplication Is Not Automatically Bad
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-the-difference-is-failure-behaviour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. The Difference Is Failure Behaviour
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-failure-isolation-requires-state-independence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Failure Isolation Requires State Independence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-independent-deployment-is-not-independent-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Independent Deployment Is Not Independent Evolution
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-paging-exposes-this-immediately" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Paging Exposes This Immediately
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-semantic-coupling-is-more-important-than-api-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Semantic Coupling Is More Important Than API Compatibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#16-the-contract-super-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16. The Contract Super-Service
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#17-contract-ownership-creates-another-dependency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17. Contract Ownership Creates Another Dependency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#18-unified-entry-point-does-not-mean-unified-contract-owner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        18. Unified Entry Point Does Not Mean Unified Contract Owner
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#19-aggregation-justifies-abstraction-routing-does-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        19. Aggregation Justifies Abstraction. Routing Does Not.
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#20-the-contract-super-service-undermines-team-independence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        20. The Contract Super-Service Undermines Team Independence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#21-pointless-service-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        21. Pointless Service Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#22-every-synchronous-edge-has-a-price" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        22. Every Synchronous Edge Has a Price
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#23-deep-dependencies-amplify-failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        23. Deep Dependencies Amplify Failure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#24-availability-follows-the-mandatory-dependency-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        24. Availability Follows the Mandatory Dependency Graph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#25-compare-the-two-architectural-styles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        25. Compare the Two Architectural Styles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="25. Compare the Two Architectural Styles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fragmented-service-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fragmented service architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capability-owned-service-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability-owned service architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#26-the-netflix-style-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        26. The Netflix-Style Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#27-holding-the-entire-universe-of-the-capability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        27. Holding the Entire Universe of the Capability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#28-freshness-and-availability-are-a-trade-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28. Freshness and Availability Are a Trade-Off
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#29-duplication-can-buy-decoupling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        29. Duplication Can Buy Decoupling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#30-the-real-test-for-a-service-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        30. The Real Test for a Service Boundary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#31-measure-the-graph-rather-than-counting-the-boxes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        31. Measure the Graph Rather Than Counting the Boxes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#32-the-diagram-can-lie" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        32. The Diagram Can Lie
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#33-a-distributed-monolith-is-not-the-only-failure-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        33. A Distributed Monolith Is Not the Only Failure Mode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#34-what-a-good-service-boundary-buys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        34. What a Good Service Boundary Buys
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#35-the-core-fallacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        35. The Core Fallacy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conclusion
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="service-fragmentation-failure-boundaries-and-pointless-dependencies">Service Fragmentation, Failure Boundaries and Pointless Dependencies<a class="headerlink" href="#service-fragmentation-failure-boundaries-and-pointless-dependencies" title="Permanent link">&para;</a></h1>
+<div class="admonition note">
+<p class="admonition-title">A note on terms</p>
+<p>This is written around <strong>service architecture</strong>, with "microservice" used
+only when discussing the industry claim around it. It also includes a
+deliberately simplified <strong>Netflix-style decomposition</strong> to show the
+contrast: capability services owning the data/state they need to
+operate, rather than synchronously walking back through a common service
+graph. Netflix's published engineering material supports the underlying
+pattern: domain-specific ownership, locally held state distributed by
+Kafka, and actively removing fragile multi-service dependency chains
+(<a href="https://netflixtechblog.com/https-medium-com-netflix-techblog-simone-a-distributed-simulation-service-b2c85131ca1b">Netflix TechBlog</a>).</p>
+</div>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>I have been building and deploying systems made up of multiple cooperating
+services for over twenty-five years. I have never found the term
+<em>microservice</em> particularly useful.</p>
+<p>A service is a service.</p>
+<p>The important questions are not whether a service is sufficiently small to
+qualify for a fashionable label. The important questions are whether the
+boundary is useful, whether the service owns a coherent capability, whether it
+can evolve independently, and whether the boundary provides meaningful
+isolation.</p>
+<p>Separating software into multiple services can be extremely effective.</p>
+<p>Separating software into more services does not automatically make it
+better.</p>
+<p>The problem starts when service decomposition becomes <strong>service
+fragmentation</strong>: a logically cohesive capability is split across multiple
+independently deployed processes while those services remain tightly coupled
+in operation, evolution and failure.</p>
+<p>At that point the architecture has not removed the dependency.</p>
+<p>It has distributed it.</p>
+<h2 id="1-a-service-is-not-independent-because-it-has-its-own-deployment">1. A Service Is Not Independent Because It Has Its Own Deployment<a class="headerlink" href="#1-a-service-is-not-independent-because-it-has-its-own-deployment" title="Permanent link">&para;</a></h2>
+<p>A common argument for splitting a system into smaller services is that each
+service can then be developed, deployed and improved independently.</p>
+<p>That sounds reasonable.</p>
+<p>But it only works when the services are actually independent.</p>
+<p>Giving something:</p>
+<ul>
+<li>its own repository;</li>
+<li>its own container;</li>
+<li>its own API;</li>
+<li>its own CI/CD pipeline;</li>
+<li>its own deployment;</li>
+<li>its own team;</li>
+</ul>
+<p>does not make it architecturally independent.</p>
+<p>It makes it <strong>independently deployable</strong>.</p>
+<p>Those are not the same thing.</p>
+<p>Consider:</p>
+<pre class="mermaid"><code>graph LR
+    A --&gt; B --&gt; C --&gt; D</code></pre>
+<p>All four services may have completely independent deployment pipelines.</p>
+<p>But if A cannot operate without B, B cannot operate without C, and C cannot
+operate without D, then the business capability is not independent.</p>
+<p>The boxes are separate.</p>
+<p>The capability is not.</p>
+<h2 id="2-service-count-tells-us-almost-nothing">2. Service Count Tells Us Almost Nothing<a class="headerlink" href="#2-service-count-tells-us-almost-nothing" title="Permanent link">&para;</a></h2>
+<p>There is very little useful information in a statement such as:</p>
+<blockquote>
+<p>The platform contains forty services.</p>
+</blockquote>
+<p>Forty services could represent forty genuinely independent capabilities.</p>
+<p>Or it could represent one large capability fragmented into forty network
+processes.</p>
+<p>Consider this:</p>
+<pre class="mermaid"><code>graph TD
+    API[Public APIs] --&gt; A
+    API --&gt; B
+    API --&gt; C
+    A --&gt; D
+    A --&gt; E
+    B --&gt; F
+    B --&gt; G
+    C --&gt; H
+    C --&gt; I</code></pre>
+<p>A request to <code>A</code> might require only <code>A</code>, <code>D</code> and <code>E</code>.</p>
+<p>If <code>H</code> fails, nobody using <code>A</code> cares.</p>
+<p>That is useful separation.</p>
+<p>Now consider:</p>
+<pre class="mermaid"><code>graph TD
+    A --&gt; B &amp; C &amp; D
+    B --&gt; E &amp; F &amp; G
+    C --&gt; G &amp; H &amp; I
+    D --&gt; I &amp; J &amp; K
+    E --&gt; L
+    F --&gt; L
+    G --&gt; L &amp; M
+    H --&gt; M
+    I --&gt; M &amp; N
+    J --&gt; N
+    K --&gt; N</code></pre>
+<p>A single operation entering at <code>A</code> may transitively depend on a substantial
+percentage of the graph.</p>
+<p>These are completely different architectures despite potentially having
+exactly the same number of services.</p>
+<p>The useful question is therefore not:</p>
+<blockquote>
+<p>How many services do we have?</p>
+</blockquote>
+<p>It is:</p>
+<blockquote>
+<p><strong>How many services must be healthy for this operation to work?</strong></p>
+</blockquote>
+<p>That is the operation's real failure surface.</p>
+<h2 id="3-deployment-boundaries-and-failure-boundaries-are-different-things">3. Deployment Boundaries and Failure Boundaries Are Different Things<a class="headerlink" href="#3-deployment-boundaries-and-failure-boundaries-are-different-things" title="Permanent link">&para;</a></h2>
+<p>A service boundary is often justified partly on the basis of fault
+isolation.</p>
+<p>The expectation is:</p>
+<pre class="mermaid"><code>graph LR
+    X[Service X fails] --&gt; Y[Capability X is affected]</code></pre>
+<p>The failure should stop somewhere useful.</p>
+<p>But consider:</p>
+<pre class="mermaid"><code>graph LR
+    A --&gt; B --&gt; C --&gt; D</code></pre>
+<p>If every service is a mandatory synchronous dependency, then a failure in
+any one of A, B, C or D fails the whole operation.</p>
+<p>There are four deployment boundaries.</p>
+<p>There is effectively one failure boundary.</p>
+<p>Worse, compared with a single process, we have introduced additional
+opportunities for failure:</p>
+<pre class="mermaid"><code>graph LR
+    A[A may fail] --&gt; AB[network A-B may fail] --&gt; B[B may fail] --&gt; BC[network B-C may fail] --&gt; C[C may fail] --&gt; CD[network C-D may fail] --&gt; D[D may fail]</code></pre>
+<p>The existence of more services has not automatically increased resilience.</p>
+<p>It may simply have increased the number of things required for success.</p>
+<p>A deployment boundary only becomes a useful failure boundary when failure can
+actually be contained there.</p>
+<h2 id="4-the-common-data-service">4. The Common Data Service<a class="headerlink" href="#4-the-common-data-service" title="Permanent link">&para;</a></h2>
+<p>A pattern that deserves particular attention is this:</p>
+<pre class="mermaid"><code>graph TD
+    API[Public API] --&gt; A[Service A]
+    A --&gt; B[Service B]
+    B --&gt; C[Service C]
+    C --&gt; D[Managed Data Service D]</code></pre>
+<p>The upper services may all perform legitimate processing. They may
+transform data, enrich data, map representations, apply rules, filter
+results, and aggregate results.</p>
+<p>They are therefore doing real work.</p>
+<p>That does not by itself justify making each stage a separate service.</p>
+<p>If all useful operations ultimately require a live call to <code>D</code>, then <code>D</code>
+defines the availability of the complete chain.</p>
+<pre class="mermaid"><code>graph LR
+    D[D unavailable] --&gt; C[C unavailable] --&gt; B[B effectively unavailable] --&gt; A[A effectively unavailable] --&gt; P[public operation unavailable]</code></pre>
+<p><code>D</code> remains a transitive single point of failure.</p>
+<p>The services above it have provided functional separation.</p>
+<p>They have not provided availability independence.</p>
+<p>That distinction matters.</p>
+<h2 id="5-doing-something-does-not-make-something-a-service">5. Doing Something Does Not Make Something a Service<a class="headerlink" href="#5-doing-something-does-not-make-something-a-service" title="Permanent link">&para;</a></h2>
+<p>This is an important mistake in service design.</p>
+<p>The argument sometimes becomes:</p>
+<blockquote>
+<p>This component performs a separate responsibility, therefore it should be a
+separate service.</p>
+</blockquote>
+<p>That does not follow.</p>
+<p>Consider:</p>
+<pre class="mermaid"><code>graph TD
+    App[Application] --&gt; API
+    App --&gt; Val[validation]
+    App --&gt; Trans[transformation]
+    App --&gt; Enr[enrichment]
+    App --&gt; Rules[business rules]
+    App --&gt; Pers[persistence]</code></pre>
+<p>These are clearly different responsibilities. They can have clear
+interfaces, separate modules, independent tests, strong ownership rules, and
+restricted dependencies.</p>
+<p>None of that requires a network boundary.</p>
+<p>Now convert the same design into:</p>
+<pre class="mermaid"><code>graph TD
+    API[API Service] --&gt; Val[Validation Service]
+    Val --&gt; Trans[Transformation Service]
+    Trans --&gt; Enr[Enrichment Service]
+    Enr --&gt; Rules[Rules Service]
+    Rules --&gt; Data[Data Service]</code></pre>
+<p>The logical dependency still exists.</p>
+<p>What has changed is the mechanism.</p>
+<p>Local calls have become distributed calls.</p>
+<p>We have now added: network latency, serialization, authentication, TLS,
+timeouts, retries, service discovery, API compatibility, distributed
+tracing, health checks, deployment coordination, and partial failure.</p>
+<p>The right question is not:</p>
+<blockquote>
+<p>Does this service do something?</p>
+</blockquote>
+<p>Of course it does.</p>
+<p>The right question is:</p>
+<blockquote>
+<p><strong>What useful independence do we gain by putting a network boundary here?</strong></p>
+</blockquote>
+<p>If there is no convincing answer, it probably should not be a separate
+service.</p>
+<h2 id="6-service-fragmentation">6. Service Fragmentation<a class="headerlink" href="#6-service-fragmentation" title="Permanent link">&para;</a></h2>
+<p>This is what I mean by <strong>service fragmentation</strong>.</p>
+<p>Service fragmentation occurs when a cohesive capability is split across
+separately deployed services without actually separating the capability.</p>
+<p>The resulting services remain coupled because they call each other
+synchronously, must be available together, evolve together, share
+end-to-end semantics, depend on the same underlying data, and require
+coordinated delivery.</p>
+<p>For example:</p>
+<pre class="mermaid"><code>graph TD
+    API[Customer API] --&gt; Map[Mapping Service]
+    Map --&gt; Rules[Rules Service]
+    Rules --&gt; Enr[Enrichment Service]
+    Enr --&gt; Data[Customer Data Service]</code></pre>
+<p>There may be five deployments.</p>
+<p>There are not necessarily five independent capabilities.</p>
+<p>If every meaningful customer operation needs all five, what we really have is
+one distributed customer capability.</p>
+<p>The implementation has been fragmented.</p>
+<p>The capability has not.</p>
+<p>That is the difference between <strong>service decomposition</strong> and <strong>service
+fragmentation</strong>.</p>
+<h2 id="7-what-real-service-decomposition-looks-like">7. What Real Service Decomposition Looks Like<a class="headerlink" href="#7-what-real-service-decomposition-looks-like" title="Permanent link">&para;</a></h2>
+<p>A useful contrast is the architectural style associated with systems such as
+Netflix.</p>
+<p>The following is deliberately simplified. It is not intended to claim that
+these are Netflix's exact internal service names or topology.</p>
+<p>Imagine a streaming platform with capabilities such as: Authentication,
+Streaming, Search, Categories, Recommendations, Viewing History, and
+Billing.</p>
+<p>These are recognisable capabilities.</p>
+<p>A sensible service architecture might look something like:</p>
+<pre class="mermaid"><code>graph TD
+    Client --&gt; Gateway[Edge / Gateway]
+    Gateway --&gt; Auth[Auth Service]
+    Gateway --&gt; Search[Search Service]
+    Gateway --&gt; Stream[Streaming Service]
+    Auth --&gt; Cat[Category Service]
+    Search --&gt; Rec[Recommendation Service]
+    Stream --&gt; Hist[Viewing History Service]</code></pre>
+<p>There will obviously be dependencies and interactions.</p>
+<p>The important difference is that each service aims to own enough of its
+universe to perform its job.</p>
+<p>For example:</p>
+<pre class="mermaid"><code>graph TD
+    Meta[Core Movie Metadata] --&gt; SV[Search View]
+    Meta --&gt; CV[Category View]
+    Meta --&gt; RM[Recommendation Model/Data]
+    SV --&gt; SS[Search Service]
+    CV --&gt; CS[Category Service]
+    RM --&gt; RS[Recommendation Service]</code></pre>
+<p>The core metadata is distributed into the representations required by the
+individual capabilities.</p>
+<p>The request path does <strong>not</strong> need to look like:</p>
+<pre class="mermaid"><code>graph TD
+    Search --&gt; Category --&gt; MetaT[Metadata Transformation] --&gt; MovieData[Movie Data Service] --&gt; DB[Database]</code></pre>
+<p>for every search request.</p>
+<p>Instead, conceptually:</p>
+<pre class="mermaid"><code>graph LR
+    M[Movie metadata changes] --&gt; F[events/feed]
+    F --&gt; S[Search index]
+    F --&gt; C[Category data]
+    F --&gt; R[Recommendations data]</code></pre>
+<p>Each service maintains the state required for its own capability.</p>
+<p>Search owns its searchable universe.</p>
+<p>Category owns its category universe.</p>
+<p>Recommendation owns its recommendation universe.</p>
+<p>Streaming owns the information required to initiate and manage streaming.</p>
+<p>Authentication owns authentication state.</p>
+<p>They may all ultimately derive some of their information from common
+sources.</p>
+<p>That does not mean they need to synchronously traverse those common sources
+for every request.</p>
+<p>Netflix has publicly described this kind of approach in a number of systems:
+distributing information through Kafka into local service state and
+deliberately removing multi-service runtime dependency chains where they have
+become sources of fragility.</p>
+<p>The distinction is fundamental.</p>
+<p>The services are fed from common information.</p>
+<p>They are not necessarily runtime wrappers around that information.</p>
+<h2 id="8-owning-your-universe">8. Owning Your Universe<a class="headerlink" href="#8-owning-your-universe" title="Permanent link">&para;</a></h2>
+<p>This is probably the most important characteristic of a useful service.</p>
+<p>A service should, as far as practical, <strong>own the universe required to
+provide its capability</strong>.</p>
+<p>Consider search.</p>
+<p>A poor decomposition might be:</p>
+<pre class="mermaid"><code>graph TD
+    Search[Search Service] --&gt; Meta[Metadata Service]
+    Meta --&gt; Cat[Category Service]
+    Cat --&gt; MovieData[Movie Data Service]
+    MovieData --&gt; DB[Database]</code></pre>
+<p>A search request is now dependent on the complete chain.</p>
+<p>If the Category Service is unavailable, search may fail.</p>
+<p>If the Movie Data Service is slow, search becomes slow.</p>
+<p>If the Metadata Service changes its paging behaviour, search may need to
+change.</p>
+<p>Search does not really own search.</p>
+<p>It owns an API on top of somebody else's runtime capability.</p>
+<p>Compare that with:</p>
+<pre class="mermaid"><code>graph TD
+    Feed[Metadata feed] --&gt; Idx[Search indexing]
+    Idx --&gt; Store[Search store]
+    Store --&gt; SS[Search Service]</code></pre>
+<p>Now: <code>Client -&gt; Search Service -&gt; Search-owned data</code>.</p>
+<p>The metadata source can be temporarily unavailable and existing search can
+potentially continue.</p>
+<p>Search can choose indexing structures appropriate for search.</p>
+<p>Search can add fields useful only to search.</p>
+<p>Search can change its ranking model.</p>
+<p>Search can page in the way that makes sense for search.</p>
+<p>Search can scale based on search traffic.</p>
+<p>That is meaningful service autonomy.</p>
+<p>Search owns its universe.</p>
+<h2 id="9-shared-source-does-not-mean-shared-runtime-dependency">9. Shared Source Does Not Mean Shared Runtime Dependency<a class="headerlink" href="#9-shared-source-does-not-mean-shared-runtime-dependency" title="Permanent link">&para;</a></h2>
+<p>This is a subtle but important distinction.</p>
+<p>There is nothing inherently wrong with having a core movie metadata store.</p>
+<p>In fact, having an authoritative source of metadata is useful.</p>
+<p>The question is how other capabilities consume it.</p>
+<p>One model is:</p>
+<pre class="mermaid"><code>graph TD
+    Req[Request] --&gt; Search[Search Service]
+    Search --&gt; Meta[Metadata Service]
+    Meta --&gt; DB[Core Metadata DB]</code></pre>
+<p>Every search request requires the metadata stack.</p>
+<p>Another is:</p>
+<pre class="mermaid"><code>graph TD
+    Meta[Core Metadata] --&gt; Stream[change stream]
+    Stream --&gt; Search[Search data]
+    Stream --&gt; Category[Category data]
+    Stream --&gt; Rec[Recommendation data]</code></pre>
+<p>Now the core metadata system is the source of truth, but it is not
+necessarily in the synchronous request path.</p>
+<p>That is a significant architectural difference.</p>
+<p>The system can have one authoritative source without every service being a
+remote view over that source.</p>
+<h2 id="10-data-duplication-is-not-automatically-bad">10. Data Duplication Is Not Automatically Bad<a class="headerlink" href="#10-data-duplication-is-not-automatically-bad" title="Permanent link">&para;</a></h2>
+<p>This sometimes creates resistance because the second model duplicates data.</p>
+<p>That is true.</p>
+<p>It may be exactly what we want.</p>
+<p>For example, the same movie may exist as: a core metadata representation, a
+search index representation, a category representation, a recommendation
+feature representation, and a streaming entitlement representation.</p>
+<p>These are not necessarily bad duplicates.</p>
+<p>They are different service-owned representations of the same underlying
+entity.</p>
+<p>Search does not necessarily need the canonical movie object.</p>
+<p>It needs the representation useful for search.</p>
+<p>Recommendations need something else.</p>
+<p>Streaming needs something else again.</p>
+<p>Trying to force every capability through one canonical runtime data model can
+create enormous coupling.</p>
+<p>Some controlled data duplication can be much cheaper than runtime coupling.</p>
+<h2 id="11-the-difference-is-failure-behaviour">11. The Difference Is Failure Behaviour<a class="headerlink" href="#11-the-difference-is-failure-behaviour" title="Permanent link">&para;</a></h2>
+<p>The difference becomes obvious when the core metadata service goes down.</p>
+<p>With runtime dependency:</p>
+<pre class="mermaid"><code>graph LR
+    M[Metadata fails] --&gt; S[Search fails]
+    M --&gt; C[Category fails]
+    M --&gt; R[Recommendations fail]
+    M --&gt; St[Streaming metadata fails]</code></pre>
+<p>One service failure takes out multiple capabilities.</p>
+<p>With locally owned state:</p>
+<pre class="mermaid"><code>graph TD
+    F[Metadata feed fails] --&gt; P[new metadata temporarily stops propagating]
+    P --&gt; S[Search continues with existing index]
+    P --&gt; C[Categories continue with existing data]
+    P --&gt; R[Recommendations continue with existing data/model]
+    P --&gt; O[Other capabilities continue where their semantics allow]</code></pre>
+<p>The information may become stale.</p>
+<p>That is different from the capability becoming unavailable.</p>
+<p>This is what a real failure boundary looks like.</p>
+<h2 id="12-failure-isolation-requires-state-independence">12. Failure Isolation Requires State Independence<a class="headerlink" href="#12-failure-isolation-requires-state-independence" title="Permanent link">&para;</a></h2>
+<p>A service that owns no useful state and synchronously calls another service
+for everything is inherently limited in how independently it can fail.</p>
+<p>Consider:</p>
+<pre class="mermaid"><code>graph LR
+    A --&gt; B --&gt; C --&gt; D</code></pre>
+<p>If A contains no useful information without B, and B contains no useful
+information without C, then independence is mostly an illusion.</p>
+<p>Now consider:</p>
+<pre class="mermaid"><code>graph TD
+    Data[Authoritative Data] --&gt; A
+    Data --&gt; B
+    Data --&gt; C
+    A --&gt; AS[A state]
+    B --&gt; BS[B state]
+    C --&gt; CS[C state]</code></pre>
+<p>Now failure can be isolated.</p>
+<p>If B disappears, A and C still work.</p>
+<p>If the authoritative data feed disappears, A, B and C may all continue on
+slightly stale state.</p>
+<p>Obviously not every domain permits stale information.</p>
+<p>Authentication, financial transactions and other strongly consistent
+operations have different requirements.</p>
+<p>But the architectural decision should be driven by those requirements rather
+than automatically creating a synchronous graph.</p>
+<h2 id="13-independent-deployment-is-not-independent-evolution">13. Independent Deployment Is Not Independent Evolution<a class="headerlink" href="#13-independent-deployment-is-not-independent-evolution" title="Permanent link">&para;</a></h2>
+<p>Returning to the original argument:</p>
+<blockquote>
+<p>The services are separate so they can be improved independently.</p>
+</blockquote>
+<p>That statement needs testing.</p>
+<p>Take <code>A -&gt; B -&gt; C -&gt; D</code>. If a useful change to A frequently requires D to
+change, which requires C to change, which requires B to change, which
+finally allows A to change, then that is not independent evolution.</p>
+<p>It is a distributed feature implementation.</p>
+<p>The services may be independently deployed.</p>
+<p>The capability is being jointly implemented.</p>
+<p>The real delivery path becomes:</p>
+<pre class="mermaid"><code>graph LR
+    TD[Team D] --&gt; TC[Team C] --&gt; TB[Team B] --&gt; TA[Team A] --&gt; Consumer</code></pre>
+<p>That is a dependency queue.</p>
+<h2 id="14-paging-exposes-this-immediately">14. Paging Exposes This Immediately<a class="headerlink" href="#14-paging-exposes-this-immediately" title="Permanent link">&para;</a></h2>
+<p>Paging is a very good example because it looks trivial.</p>
+<p>Assume <code>A -&gt; B -&gt; C -&gt; D</code>, and A needs <code>GET /items?page=5&amp;size=100</code>.</p>
+<p>It looks like an A feature.</p>
+<p>It probably is not.</p>
+<p>For efficient and correct paging, D may have to understand limit, offset,
+cursor and ordering semantics. C may have to preserve those semantics. B may
+have to preserve them again. A finally exposes them.</p>
+<pre class="mermaid"><code>graph LR
+    A[A needs paging] --&gt; B[B needs paging semantics] --&gt; C[C needs paging semantics] --&gt; D[D needs suitable data access]</code></pre>
+<p>The services may have perfectly backward-compatible APIs.</p>
+<p>That is irrelevant.</p>
+<p>The feature still has to propagate through the graph.</p>
+<p>The coupling is semantic.</p>
+<h2 id="15-semantic-coupling-is-more-important-than-api-compatibility">15. Semantic Coupling Is More Important Than API Compatibility<a class="headerlink" href="#15-semantic-coupling-is-more-important-than-api-compatibility" title="Permanent link">&para;</a></h2>
+<p>Breaking API changes are obvious.</p>
+<p>Semantic coupling is more subtle.</p>
+<p>Consider: paging, filtering, sorting, stable ordering, projection, total
+counts, temporal queries, consistency, idempotency, optimistic locking,
+security filtering, and entitlement filtering.</p>
+<p>These may all need to propagate through a service hierarchy.</p>
+<pre class="mermaid"><code>graph TD
+    Req[Public requirement] --&gt; A[Service A semantics] --&gt; B[Service B semantics] --&gt; C[Service C semantics] --&gt; D[Data semantics]</code></pre>
+<p>That is not independent evolution.</p>
+<p>The feature is implemented by the graph.</p>
+<h2 id="16-the-contract-super-service">16. The Contract Super-Service<a class="headerlink" href="#16-the-contract-super-service" title="Permanent link">&para;</a></h2>
+<p>Now consider service A acting as a unified API across B, C and D.</p>
+<p>There are two completely different cases.</p>
+<p>The first is genuine aggregation:</p>
+<pre class="mermaid"><code>graph TD
+    Caller --&gt; A
+    A --&gt; B
+    A --&gt; C
+    A --&gt; D</code></pre>
+<p>A creates a capability that does not exist anywhere else.</p>
+<p>For example, <code>GET /customer-overview</code> might combine B's account
+information, C's customer information, and D's product information.</p>
+<p>A owns that capability.</p>
+<p>It makes complete sense for A to own the API.</p>
+<p>The second case is:</p>
+<pre class="mermaid"><code>graph LR
+    Caller --&gt; A --&gt; B</code></pre>
+<p>where A merely forwards the call.</p>
+<p>That is not aggregation.</p>
+<p>It is routing.</p>
+<p>If A nevertheless takes B's API and republishes it as part of A's own
+contract, A has become a <strong>contract super-service</strong>.</p>
+<h2 id="17-contract-ownership-creates-another-dependency">17. Contract Ownership Creates Another Dependency<a class="headerlink" href="#17-contract-ownership-creates-another-dependency" title="Permanent link">&para;</a></h2>
+<p>Suppose B exposes <code>GET /accounts</code>.</p>
+<p>A republishes this as part of the unified A API.</p>
+<p>Now B adds paging.</p>
+<p>If B owned the consumable API directly:</p>
+<pre class="mermaid"><code>graph LR
+    B1[B adds paging] --&gt; B2[B publishes API] --&gt; C1[consumer uses it]</code></pre>
+<p>If A owns the external contract:</p>
+<pre class="mermaid"><code>graph TD
+    B1[B adds paging] --&gt; A1[A team understands change]
+    A1 --&gt; A2[A OpenAPI changes]
+    A2 --&gt; A3[A implementation changes]
+    A3 --&gt; A4[A tests change]
+    A4 --&gt; A5[A deployed]
+    A5 --&gt; C1[consumer uses paging]</code></pre>
+<p>The architecture has created a dependency which adds no business capability.</p>
+<p>A is now an <strong>evolutionary choke point</strong>.</p>
+<p>B is independently deployable.</p>
+<p>B is not independently deliverable.</p>
+<h2 id="18-unified-entry-point-does-not-mean-unified-contract-owner">18. Unified Entry Point Does Not Mean Unified Contract Owner<a class="headerlink" href="#18-unified-entry-point-does-not-mean-unified-contract-owner" title="Permanent link">&para;</a></h2>
+<p>There is nothing wrong with <code>api.example.com</code> being the single way into the
+platform.</p>
+<p>A gateway can provide authentication, security policy, routing, rate
+limiting, telemetry and observability.</p>
+<p>For example:</p>
+<pre class="mermaid"><code>graph LR
+    G[api.example.com] --&gt;|"/api/search/*"| Search[Search Service]
+    G --&gt;|"/api/category/*"| Category[Category Service]
+    G --&gt;|"/api/stream/*"| Stream[Streaming Service]
+    G --&gt;|"/api/account/*"| Account[Account Service]</code></pre>
+<p>Each service can still own its contract.</p>
+<p>The gateway owns the route.</p>
+<p>Where aggregation exists, at <code>/api/homepage</code>, an aggregator may own that API
+because it genuinely creates the result from several services.</p>
+<p>This gives a simple model:</p>
+<blockquote>
+<p><strong>The service owns its capability.</strong></p>
+<p><strong>The gateway owns the route.</strong></p>
+<p><strong>The aggregator owns the composition.</strong></p>
+</blockquote>
+<p>This is much cleaner than making one service pretend to own everything.</p>
+<h2 id="19-aggregation-justifies-abstraction-routing-does-not">19. Aggregation Justifies Abstraction. Routing Does Not.<a class="headerlink" href="#19-aggregation-justifies-abstraction-routing-does-not" title="Permanent link">&para;</a></h2>
+<p>This distinction is worth stating explicitly.</p>
+<p>If A calls B, C and D, then combines the results into something new, A
+provides an abstraction.</p>
+<p>A should own that abstraction.</p>
+<p>If A simply forwards a request to B and returns the response, A has added no
+semantic abstraction.</p>
+<p>It has added a route.</p>
+<p>Making A re-own B's contract in that case does not increase encapsulation.</p>
+<p>It increases coupling.</p>
+<p>So:</p>
+<blockquote>
+<p><strong>Aggregation justifies abstraction. Routing does not.</strong></p>
+</blockquote>
+<h2 id="20-the-contract-super-service-undermines-team-independence">20. The Contract Super-Service Undermines Team Independence<a class="headerlink" href="#20-the-contract-super-service-undermines-team-independence" title="Permanent link">&para;</a></h2>
+<p>This also becomes an organisational problem.</p>
+<p>The advertised structure may be that Team B owns B, Team C owns C, and Team
+D owns D.</p>
+<p>Each team supposedly owns its service.</p>
+<p>But if every consumer-facing capability must pass through A:</p>
+<pre class="mermaid"><code>graph LR
+    TB[Team B] --&gt; B[Service B] --&gt; TA[Team A] --&gt; A[Service A] --&gt; Consumer</code></pre>
+<p>then Team B does not actually control delivery of its capability.</p>
+<p>It can implement the feature.</p>
+<p>It can deploy the feature.</p>
+<p>But it cannot expose the feature without Team A.</p>
+<p>The architecture has recreated cross-team release coordination through the
+contract layer.</p>
+<p>That is another form of service fragmentation.</p>
+<h2 id="21-pointless-service-dependencies">21. Pointless Service Dependencies<a class="headerlink" href="#21-pointless-service-dependencies" title="Permanent link">&para;</a></h2>
+<p>Not every dependency is bad.</p>
+<p>Services have to interact.</p>
+<p>The question is whether each dependency has a reason to exist.</p>
+<p>A suspicious dependency often has several of these characteristics:
+synchronous, mandatory, no degraded behaviour, no independent business
+capability, no meaningful scaling distinction, no useful security boundary,
+no fault isolation, common underlying data dependency, coordinated
+evolution, and propagated semantics.</p>
+<p>Again, the downstream service may perform substantial processing.</p>
+<p>That is not the question.</p>
+<p>The question is:</p>
+<blockquote>
+<p><strong>What architectural benefit comes from doing that processing in another
+network process?</strong></p>
+</blockquote>
+<p>If the answer is effectively "because it is a separate responsibility",
+then that is probably not enough.</p>
+<p>Responsibilities can be modules.</p>
+<p>Services need a stronger justification.</p>
+<h2 id="22-every-synchronous-edge-has-a-price">22. Every Synchronous Edge Has a Price<a class="headerlink" href="#22-every-synchronous-edge-has-a-price" title="Permanent link">&para;</a></h2>
+<p>A synchronous service call is not free.</p>
+<p>Every edge <code>A -&gt; B</code> adds latency, an availability dependency, a timeout,
+retry behaviour, authentication, a contract, an operational dependency, and
+another place where behaviour must be traced.</p>
+<p>Add enough edges and the graph itself becomes the problem.</p>
+<p>For example:</p>
+<pre class="mermaid"><code>graph LR
+    A --&gt; B --&gt; D
+    A --&gt; C --&gt; E --&gt; F
+    F --&gt; C</code></pre>
+<p>Now failure propagation is a graph problem.</p>
+<p>Feature delivery is a graph problem.</p>
+<p>Testing is a graph problem.</p>
+<p>Debugging is a graph problem.</p>
+<p>At that point the architecture is generating complexity rather than
+controlling it.</p>
+<h2 id="23-deep-dependencies-amplify-failure">23. Deep Dependencies Amplify Failure<a class="headerlink" href="#23-deep-dependencies-amplify-failure" title="Permanent link">&para;</a></h2>
+<p>Suppose <code>A -&gt; B -&gt; C -&gt; D</code> and D becomes slow.</p>
+<p>Then C waits for D, B waits for C, A waits for B, and the caller waits for
+A.</p>
+<p>Connections are consumed.</p>
+<p>Threads are occupied.</p>
+<p>Queues grow.</p>
+<p>Then retries appear: A retries B, B retries C, C retries D.</p>
+<p>A small problem at D can now produce a much larger load against D.</p>
+<p>The system needs circuit breakers, bulkheads, retry budgets, back-pressure,
+load shedding, and distributed tracing.</p>
+<p>Those are all useful tools.</p>
+<p>But it is worth remembering why they are required.</p>
+<p>They are required because there are network boundaries.</p>
+<p>If the network boundary has bought us no meaningful independence, we have
+added the distributed-system cost without getting much back.</p>
+<h2 id="24-availability-follows-the-mandatory-dependency-graph">24. Availability Follows the Mandatory Dependency Graph<a class="headerlink" href="#24-availability-follows-the-mandatory-dependency-graph" title="Permanent link">&para;</a></h2>
+<p>Take a deliberately simplified example where every service is 99.9%
+available.</p>
+<p>One mandatory service: <code>99.9%</code>.</p>
+<p>Five independent mandatory services in sequence: <code>0.999 ^ 5 ~= 99.5%</code>.</p>
+<p>Ten: <code>0.999 ^ 10 ~= 99.0%</code>.</p>
+<p>Real failures are not independent, so this is not an availability model.</p>
+<p>It is simply illustrating something obvious:</p>
+<blockquote>
+<p><strong>Every mandatory synchronous dependency is another way for the operation
+to fail.</strong></p>
+</blockquote>
+<p>Putting a component in its own container does not improve the availability
+of a request if the request now depends on that container as well.</p>
+<h2 id="25-compare-the-two-architectural-styles">25. Compare the Two Architectural Styles<a class="headerlink" href="#25-compare-the-two-architectural-styles" title="Permanent link">&para;</a></h2>
+<h3 id="fragmented-service-architecture">Fragmented service architecture<a class="headerlink" href="#fragmented-service-architecture" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>graph TD
+    API[Public API] --&gt; A
+    A --&gt; B &amp; C &amp; D
+    B --&gt; E
+    C --&gt; E &amp; F
+    D --&gt; F
+    E --&gt; G
+    F --&gt; G
+    G --&gt; Store[Managed Data Store]</code></pre>
+<p>Characteristics: a large synchronous dependency graph, capabilities that
+propagate through layers, teams that depend on teams, paging/filtering/
+sorting that propagates downward, failures that propagate upward, a common
+data dependency sitting on the request path, many deployment boundaries, and
+few useful failure boundaries.</p>
+<h3 id="capability-owned-service-architecture">Capability-owned service architecture<a class="headerlink" href="#capability-owned-service-architecture" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>graph TD
+    Meta[Core Metadata] --&gt; Feed[change/event feed]
+    Feed --&gt; SS[Search Store] --&gt; Search[Search Service]
+    Feed --&gt; CS[Category Store] --&gt; Category[Category Service]
+    Feed --&gt; RS[Recommendation Store] --&gt; Rec[Recommendation Service]
+    Auth[Auth Service] --&gt; AState[own state]
+    Stream[Streaming Service] --&gt; StState[own state]
+    Hist[History Service] --&gt; HState[own state]</code></pre>
+<p>Characteristics: services own capabilities, services own the state required
+by those capabilities, common source data is distributed rather than
+repeatedly fetched, the runtime dependency graph is smaller, failure
+boundaries are meaningful, service-specific data models are possible, teams
+can evolve capability-specific behaviour, and temporary source failure can
+often mean stale data rather than total failure.</p>
+<p>That is a much more useful form of service independence.</p>
+<h2 id="26-the-netflix-style-example">26. The Netflix-Style Example<a class="headerlink" href="#26-the-netflix-style-example" title="Permanent link">&para;</a></h2>
+<p>A simplified Netflix-style system makes the distinction particularly clear.</p>
+<p>Imagine: Auth Service, Search Service, Streaming Service, Category Service,
+Recommendation Service, and History Service.</p>
+<p>All of them may be influenced by a common catalogue of movies, programmes and
+associated metadata.</p>
+<p>The naive fragmented design is:</p>
+<pre class="mermaid"><code>graph LR
+    Search --&gt; Category --&gt; Metadata --&gt; MovieData[Movie Data]
+    Rec[Recommendation] --&gt; Category
+    Stream[Streaming] --&gt; Metadata
+    Hist[History] --&gt; Metadata</code></pre>
+<p>Now Movie Data is in almost every runtime path.</p>
+<p>Metadata failure affects everything.</p>
+<p>Category failure can unexpectedly affect search.</p>
+<p>Changes to metadata semantics ripple into multiple services.</p>
+<p>Instead, distribute the information:</p>
+<pre class="mermaid"><code>graph TD
+    Meta[Movie Metadata] --&gt; Events
+    Events --&gt; SI[Search index] --&gt; SS[Search Service]
+    Events --&gt; CD[Category data] --&gt; CS[Category Service]
+    Events --&gt; RD[Recommendation data] --&gt; RS[Recommendation Service]
+    Events --&gt; StD[Streaming data] --&gt; StS[Streaming Service]</code></pre>
+<p>Each service now owns the representation appropriate to its capability.</p>
+<p>Search is not a remote metadata query service.</p>
+<p>It is the search system.</p>
+<p>Category is not a thin wrapper around a central movie record.</p>
+<p>It owns the category view.</p>
+<p>Recommendation owns the data and models necessary to recommend.</p>
+<p>Streaming owns the state required to deliver streams.</p>
+<p>Authentication owns authentication.</p>
+<p>This is much closer to genuine service independence.</p>
+<h2 id="27-holding-the-entire-universe-of-the-capability">27. Holding the Entire Universe of the Capability<a class="headerlink" href="#27-holding-the-entire-universe-of-the-capability" title="Permanent link">&para;</a></h2>
+<p>When I say a service should "own its universe", I do not mean it must be
+disconnected from everything else.</p>
+<p>I mean it should contain enough of the state and logic relevant to its
+capability that it is not merely a synchronous adapter around another
+service.</p>
+<p>For Search: search indexes, search-specific metadata, ranking information,
+search paging, and search filtering belong naturally in the Search
+universe.</p>
+<p>For Category: category membership, category ordering, and category
+presentation information belong in the Category universe.</p>
+<p>For Recommendations: recommendation candidates, features, models/results,
+and ranking belong in that universe.</p>
+<p>The common metadata store remains authoritative for common facts.</p>
+<p>But the runtime capability should not necessarily depend on walking back to
+that authoritative store for every operation.</p>
+<p>This is where data propagation becomes useful.</p>
+<h2 id="28-freshness-and-availability-are-a-trade-off">28. Freshness and Availability Are a Trade-Off<a class="headerlink" href="#28-freshness-and-availability-are-a-trade-off" title="Permanent link">&para;</a></h2>
+<p>This design does introduce a trade-off.</p>
+<p>If the common metadata feed fails, downstream views may become temporarily
+stale.</p>
+<p>But compare "metadata unavailable, search data 2 minutes stale" with
+"metadata unavailable, search unavailable".</p>
+<p>Those are very different failure modes.</p>
+<p>For many capabilities, stale-but-correct-enough information is vastly
+preferable to complete outage.</p>
+<p>For some capabilities, of course, it is unacceptable.</p>
+<p>Authentication, entitlement enforcement, balances, financial posting and
+similar operations may require much stronger consistency.</p>
+<p>That is fine.</p>
+<p>The point is not that every service should cache everything.</p>
+<p>The point is:</p>
+<blockquote>
+<p><strong>The consistency and dependency model should follow the requirements of
+the capability, not an assumption that every service should synchronously
+ask another service for its data.</strong></p>
+</blockquote>
+<h2 id="29-duplication-can-buy-decoupling">29. Duplication Can Buy Decoupling<a class="headerlink" href="#29-duplication-can-buy-decoupling" title="Permanent link">&para;</a></h2>
+<p>There is a tendency to treat duplicated data as inherently bad.</p>
+<p>In a service architecture, that can be exactly backwards.</p>
+<p>Avoiding all duplication frequently produces:</p>
+<pre class="mermaid"><code>graph TD
+    A[Service A] --&gt; Canon[Canonical Service]
+    B[Service B] --&gt; Canon
+    C[Service C] --&gt; Canon
+    D[Service D] --&gt; Canon</code></pre>
+<p>which produces runtime coupling.</p>
+<p>Controlled duplication can instead produce:</p>
+<pre class="mermaid"><code>graph TD
+    Canon[Canonical source] --&gt; AV[A view] --&gt; A
+    Canon --&gt; BV[B view] --&gt; B
+    Canon --&gt; CV[C view] --&gt; C</code></pre>
+<p>The data is duplicated.</p>
+<p>The runtime dependency is not.</p>
+<p>Storage is cheap.</p>
+<p>Cross-service synchronous coupling is not.</p>
+<h2 id="30-the-real-test-for-a-service-boundary">30. The Real Test for a Service Boundary<a class="headerlink" href="#30-the-real-test-for-a-service-boundary" title="Permanent link">&para;</a></h2>
+<p>For every service boundary, ask:</p>
+<p><strong>Failure</strong> — If this service disappears, what else stops working? Does the
+failure stop at a sensible boundary?</p>
+<p><strong>Evolution</strong> — Can this service implement a significant feature without
+another service changing?</p>
+<p><strong>Delivery</strong> — Can its owning team expose that feature without another
+team's release?</p>
+<p><strong>State</strong> — Does it own enough state to perform its capability, or does it
+fetch its entire world synchronously from somewhere else?</p>
+<p><strong>Semantics</strong> — Are paging, filtering, sorting and other semantics local to
+the capability, or do they propagate through several services?</p>
+<p><strong>Scaling</strong> — Does it actually have independent scaling requirements?</p>
+<p><strong>Security</strong> — Is there a real trust boundary?</p>
+<p><strong>Domain</strong> — Does it represent a recognisable capability, or just one
+processing stage?</p>
+<p><strong>Operations</strong> — Can it degrade, restart, roll back or fail without taking
+unrelated capabilities with it?</p>
+<p>If most of the answers indicate dependence, the network boundary needs a very
+good justification.</p>
+<h2 id="31-measure-the-graph-rather-than-counting-the-boxes">31. Measure the Graph Rather Than Counting the Boxes<a class="headerlink" href="#31-measure-the-graph-rather-than-counting-the-boxes" title="Permanent link">&para;</a></h2>
+<p>For each public operation, measure:</p>
+<ul>
+<li>maximum synchronous dependency depth</li>
+<li>number of transitive synchronous dependencies</li>
+<li>number of mandatory dependencies</li>
+<li>number of optional/degradable dependencies</li>
+<li>number of service failures capable of failing the operation</li>
+<li>number of services normally changed for a feature</li>
+<li>number of teams required to deliver that feature</li>
+<li>percentage of data obtained synchronously from another service</li>
+</ul>
+<p>These tell us considerably more than:</p>
+<blockquote>
+<p>We have 43 services.</p>
+</blockquote>
+<h2 id="32-the-diagram-can-lie">32. The Diagram Can Lie<a class="headerlink" href="#32-the-diagram-can-lie" title="Permanent link">&para;</a></h2>
+<p>A diagram containing four independent-looking boxes — A, B, C, D — looks
+like four independent things.</p>
+<p>Kubernetes sees four deployments.</p>
+<p>Git sees four repositories.</p>
+<p>CI sees four pipelines.</p>
+<p>Management sees four owning teams.</p>
+<p>But if A requires B, B requires C, and C requires D, then the business
+capability is still one thing.</p>
+<pre class="mermaid"><code>graph LR
+    A --&gt; B --&gt; C --&gt; D</code></pre>
+<p>The independence is largely packaging.</p>
+<p>That is one of the clearest symptoms of service fragmentation:</p>
+<blockquote>
+<p><strong>There are more deployment boundaries than behavioural boundaries.</strong></p>
+</blockquote>
+<p>Or, more simply:</p>
+<blockquote>
+<p><strong>The boxes are independent. The capability is not.</strong></p>
+</blockquote>
+<h2 id="33-a-distributed-monolith-is-not-the-only-failure-mode">33. A Distributed Monolith Is Not the Only Failure Mode<a class="headerlink" href="#33-a-distributed-monolith-is-not-the-only-failure-mode" title="Permanent link">&para;</a></h2>
+<p>"Distributed monolith" is often used to describe this kind of system.</p>
+<p>Sometimes it is accurate.</p>
+<p>But <strong>service fragmentation</strong> is more useful because it describes how we got
+there.</p>
+<p>The problem is not merely that everything is coupled.</p>
+<p>The problem is that a capability has been broken into increasingly small
+distributed pieces without creating corresponding independence.</p>
+<p>That fragmentation then produces distributed coupling, deep dependency
+graphs, semantic propagation, failure propagation, team dependencies,
+contract dependencies, and release dependencies.</p>
+<p>The result can behave like a monolith at runtime while being considerably
+more difficult to reason about and operate than an actual monolith.</p>
+<h2 id="34-what-a-good-service-boundary-buys">34. What a Good Service Boundary Buys<a class="headerlink" href="#34-what-a-good-service-boundary-buys" title="Permanent link">&para;</a></h2>
+<p>There are plenty of valid reasons to create a service.</p>
+<p>A good service boundary may provide: fault isolation, independent scaling,
+independent evolution, independent delivery, independent data ownership,
+separate security boundaries, separate lifecycle requirements, a
+recognisable business capability, asynchronous interaction, and independent
+operational behaviour.</p>
+<p>These benefits justify the cost of distribution.</p>
+<p>If the boundary provides none of them, then the fact that two pieces of code
+have different responsibilities is not enough.</p>
+<p>They can be modules.</p>
+<h2 id="35-the-core-fallacy">35. The Core Fallacy<a class="headerlink" href="#35-the-core-fallacy" title="Permanent link">&para;</a></h2>
+<p>The fundamental fallacy is:</p>
+<blockquote>
+<p><strong>Splitting a capability into independently deployable services does not
+make the capability independent.</strong></p>
+</blockquote>
+<p>If those services have to be available together, have to change together,
+have to understand the same end-to-end semantics, have to coordinate
+delivery, and depend on the same critical downstream service, then they
+remain coupled.</p>
+<p>The mechanism of coupling has simply changed.</p>
+<p>Instead of local coupling, there is distributed coupling.</p>
+<p>Repeat that enough times and we get <strong>service fragmentation</strong>.</p>
+<h2 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
+<p>The objective of a service architecture should not be to create as many
+independently deployable things as possible.</p>
+<p>It should be to identify where useful independence actually exists.</p>
+<p>A service boundary should buy something.</p>
+<p>It should provide some combination of: failure isolation, capability
+ownership, independent evolution, independent delivery, independent
+scaling, data ownership, and security separation.</p>
+<p>If it buys none of those things, it is difficult to justify putting a
+network boundary there.</p>
+<p>A good multi-service architecture might have an authentication service, a
+search service, a streaming service, a recommendation service and a category
+service.</p>
+<p>They may all receive information originating from the same authoritative
+movie metadata.</p>
+<p>That does not mean every request should synchronously walk back through a
+shared movie metadata service.</p>
+<p>Each capability should, where its requirements permit, own the data and
+behaviour necessary to provide that capability.</p>
+<p>Search should own search.</p>
+<p>Categories should own categories.</p>
+<p>Streaming should own streaming.</p>
+<p>Authentication should own authentication.</p>
+<p>Recommendations should own recommendations.</p>
+<p>The services can share sources of truth without sharing every runtime
+dependency.</p>
+<p>That produces actual failure boundaries.</p>
+<p>It permits different data models.</p>
+<p>It allows capabilities to evolve independently.</p>
+<p>It reduces the amount of the service graph that must be alive for any
+individual operation.</p>
+<p>By contrast, a system where requests pass through several mandatory service
+layers, where paging and filtering changes propagate through those layers,
+where teams wait for other teams before exposing new capabilities, and where
+the complete graph ultimately terminates at one synchronous data service is
+not demonstrating useful decomposition merely because each box can be
+deployed independently.</p>
+<p>It is very likely demonstrating <strong>service fragmentation</strong>.</p>
+<p>The boxes are independent. The capability is not.</p>
+<p>The deployments are independent. The delivery is not.</p>
+<p>The APIs are separate. The semantics are not.</p>
+<p>The processes are separate. The failure boundary is not.</p>
+<p>Good service architecture distributes independent capabilities.</p>
+<p><strong>Service fragmentation merely distributes the dependency graph.</strong></p>
+<div class="admonition note">
+<p class="admonition-title">On the Netflix example</p>
+<p>The Netflix-style section is deliberately an architectural illustration
+rather than a claim that Netflix literally has exactly those six
+services. Their published engineering work does, however, give solid
+examples of the underlying principles: domain services keeping
+distributed state locally rather than adding request-path dependencies,
+and removing fragile multi-service dependency chains in favour of
+authoritative data and purpose-built abstractions (<a href="https://netflixtechblog.com/https-medium-com-netflix-techblog-simone-a-distributed-simulation-service-b2c85131ca1b">Netflix TechBlog</a>).</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "content.code.copy", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

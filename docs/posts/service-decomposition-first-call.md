@@ -105,9 +105,14 @@ a unit. But it doesn't carry the extra inter-service call cost, added
 latency and operational overhead of a service boundary, and those extras
 are where the real bill comes from.
 
-A well-factored module can be extracted later once the evidence shows up,
-but merging services back together is far more expensive. Deferring the
-split preserves your options.
+A well-factored module can be extracted later once the evidence shows up.
+The reverse is not true: merging services back together is far more
+expensive than splitting them, and that's only half of it. By the time
+you realize the boundary was wrong, you've already paid the large
+up-front cost of decomposition (the APIs, the pipelines, the data
+separation, the operational setup) and never received any value from it.
+Merging means paying again to undo work that returned nothing. Deferring
+the split preserves your options; splitting early spends them.
 
 Introduce a deployable boundary only when the need is demonstrable: the
 capability is truly independent, the benefit is measurable, and it
